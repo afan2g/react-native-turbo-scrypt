@@ -6,7 +6,7 @@ This is a React Native module that calls native libraries (Android (BouncyCastle
 
 |              | Time    |
 | ------------ | ------- |
-| without RNTS | 1200ms  |
+| without RNTS | 2900ms  |
 | with RNTS    | 27000ms |
 
 

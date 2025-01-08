@@ -23,7 +23,7 @@ function App(): React.JSX.Element {
   const [error, setError] = React.useState<string | null>(null);
   const [progress, setProgress] = React.useState<number>(0);
   const [iteration, setIteration] = React.useState<number>(0);
-
+  const [hashTime, setHashTime] = React.useState<number>(0);
   const computeHash = async () => {
     setLoading(true);
     setError(null);
@@ -43,7 +43,8 @@ function App(): React.JSX.Element {
         passwordLength: randomPassword.length,
         saltLength: randomSalt.length
       });
-
+      
+      const t1 = performance.now();
       const hash = await scrypt(
         passwordStr,
         saltStr,
@@ -56,7 +57,10 @@ function App(): React.JSX.Element {
           setProgress(p);
         }
       );
-      
+      const benchmarkTime = performance.now() - t1;
+      setHashTime(benchmarkTime);
+
+      console.log('Hash computed in', benchmarkTime.toFixed(2), 'ms');
       console.log('Hash computed:', hash);
       setValue(hash);
       setIteration(prev => prev + 1);
@@ -85,11 +89,11 @@ function App(): React.JSX.Element {
       <Text style={styles.hash}>
         {value}
       </Text>
-      {loading && (
+    
         <Text style={styles.text}>
-          Computing... {progress.toFixed(0)}%
+          {loading ? `Computing... ${progress.toFixed(0)}%` : `Hash computed in ${hashTime.toFixed(2)} ms`}
         </Text>
-      )}
+   
       {error && (
         <Text style={[styles.text, styles.error]}>
           Error: {error}
