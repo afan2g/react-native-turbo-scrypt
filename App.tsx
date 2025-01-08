@@ -1,118 +1,127 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
-  View,
+  Button,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {scrypt} from './specs/NativeScrypt';
+const EMPTY = '<empty>';
+const N = 1 << 17;
+const r = 8;
+const p = 1;
+const dkLen = 32;
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+function generateRandomBytes(length: number): Uint8Array {
+  return new Uint8Array(Array.from({ length }, () => Math.floor(Math.random() * 256)));
 }
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [value, setValue] = React.useState<string>(EMPTY);
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [progress, setProgress] = React.useState<number>(0);
+  const [iteration, setIteration] = React.useState<number>(0);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const computeHash = async () => {
+    setLoading(true);
+    setError(null);
+    setProgress(0);
+    try {
+      console.log('Starting hash computation');
+      
+      // Generate random password and salt
+      const randomPassword = generateRandomBytes(32); // 32 bytes random password
+      const randomSalt = generateRandomBytes(16); // 16 bytes random salt
+      
+      // Convert to base64
+      const passwordStr = btoa(String.fromCharCode.apply(null, Array.from(randomPassword)));
+      const saltStr = btoa(String.fromCharCode.apply(null, Array.from(randomSalt)));
+      
+      console.log('Using random inputs:', {
+        passwordLength: randomPassword.length,
+        saltLength: randomSalt.length
+      });
+
+      const hash = await scrypt(
+        passwordStr,
+        saltStr,
+        N,
+        r,
+        p,
+        dkLen,
+        (p) => {
+          console.log('Progress:', p);
+          setProgress(p);
+        }
+      );
+      
+      console.log('Hash computed:', hash);
+      setValue(hash);
+      setIteration(prev => prev + 1);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      console.error('Error computing hash:', errorMessage);
+      setError(errorMessage);
+      setValue(EMPTY);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  React.useEffect(() => {
+    computeHash();
+  }, []);
+
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.text}>
+        Scrypt hashing details: N={N}, r={r}, p={p}, dkLen={dkLen}
+      </Text>
+      <Text style={styles.text}>
+        Hash #{iteration}:
+      </Text>
+      <Text style={styles.hash}>
+        {value}
+      </Text>
+      {loading && (
+        <Text style={styles.text}>
+          Computing... {progress.toFixed(0)}%
+        </Text>
+      )}
+      {error && (
+        <Text style={[styles.text, styles.error]}>
+          Error: {error}
+        </Text>
+      )}
+      <Button 
+        title="Generate New Random Hash" 
+        onPress={computeHash}
+        disabled={loading}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    padding: 16,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  text: {
+    margin: 10,
+    fontSize: 20,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  hash: {
+    margin: 10,
+    fontSize: 16,
+    fontFamily: 'monospace',
+    color: '#2196F3',
   },
-  highlight: {
-    fontWeight: '700',
-  },
+  error: {
+    color: 'red',
+  }
 });
 
 export default App;
