@@ -6,7 +6,7 @@ import {
   Button,
 } from 'react-native';
 
-import {scrypt} from './specs/NativeScrypt';
+import { scrypt } from './specs/NativeScrypt';
 const EMPTY = '<empty>';
 const N = 1 << 17;
 const r = 8;
@@ -24,6 +24,7 @@ function App(): React.JSX.Element {
   const [progress, setProgress] = React.useState<number>(0);
   const [iteration, setIteration] = React.useState<number>(0);
   const [hashTime, setHashTime] = React.useState<number>(0);
+
   const computeHash = async () => {
     setLoading(true);
     setError(null);
@@ -35,19 +36,16 @@ function App(): React.JSX.Element {
       const randomPassword = generateRandomBytes(32); // 32 bytes random password
       const randomSalt = generateRandomBytes(16); // 16 bytes random salt
       
-      // Convert to base64
-      const passwordStr = btoa(String.fromCharCode.apply(null, Array.from(randomPassword)));
-      const saltStr = btoa(String.fromCharCode.apply(null, Array.from(randomSalt)));
-      
       console.log('Using random inputs:', {
         passwordLength: randomPassword.length,
         saltLength: randomSalt.length
       });
       
       const t1 = performance.now();
+      // Pass the Uint8Arrays directly - scrypt function will handle conversion
       const hash = await scrypt(
-        passwordStr,
-        saltStr,
+        randomPassword,
+        randomSalt,
         N,
         r,
         p,
@@ -86,13 +84,13 @@ function App(): React.JSX.Element {
       <Text style={styles.text}>
         Hash #{iteration}:
       </Text>
-      <Text style={styles.hash}>
+      <Text style={styles.hash} numberOfLines={2} ellipsizeMode="tail">
         {value}
       </Text>
     
-        <Text style={styles.text}>
-          {loading ? `Computing... ${progress.toFixed(0)}%` : `Hash computed in ${hashTime.toFixed(2)} ms`}
-        </Text>
+      <Text style={styles.text}>
+        {loading ? `Computing... ${progress.toFixed(0)}%` : `Hash computed in ${hashTime.toFixed(2)} ms`}
+      </Text>
    
       {error && (
         <Text style={[styles.text, styles.error]}>
@@ -122,6 +120,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'monospace',
     color: '#2196F3',
+    flexWrap: 'wrap',
   },
   error: {
     color: 'red',
