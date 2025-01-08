@@ -1,6 +1,6 @@
 # react-native-turbo-scrypt
 
-This is a React Native module that calls native libraries (Android (BouncyCastle)) for much faster peroformance.
+This is a React Native module that calls native libraries (Android (BouncyCastle)) for much faster performance.
 
 ## Benchmarks
 
@@ -13,17 +13,12 @@ This is a React Native module that calls native libraries (Android (BouncyCastle
 ## Installation
 
 clone the repo:
-'''
-git clone git@github.com:afan2g/react-native-turbo-scrypt.git
-'''
+```git clone git@github.com:afan2g/react-native-turbo-scrypt.git```
 
 install necessary packages:
-'''
-npm install
-'''
+```npm install```
 
 run server:
-'''
-npm run android
-'''
+
+```npm run android```
 
